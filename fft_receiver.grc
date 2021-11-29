@@ -75,7 +75,7 @@ blocks:
     bus_structure: null
     coordinate: [184, 276.0]
     rotation: 0
-    state: true
+    state: disabled
 - name: app_vars
   id: snippet
   parameters:
@@ -115,7 +115,7 @@ blocks:
     bus_structure: null
     coordinate: [488, 300.0]
     rotation: 0
-    state: true
+    state: disabled
 - name: fft_broadcast
   id: epy_block
   parameters:
@@ -127,9 +127,8 @@ blocks:
       \    def __init__(self, fft_size=4096):\n        gr.sync_block.__init__(self,\n\
       \                               name=\"plotter\",\n                        \
       \       in_sig=[(np.float32, fft_size)],\n                               out_sig=[])\n\
-      \        self.tb=None\n    def set_tb(ext_tb):\n        self.tb=ext_tb     \
-      \   \n        print(\"****************TOP BLOCK *************\",self.tb)\n \
-      \   def work(self, input_items, output_items):\n        ninput_items = len(input_items[0])\n\
+      \        self.tb=None\n    def set_tb(self,ext_tb):\n        self.tb=ext_tb\n\
+      \    def work(self, input_items, output_items):\n        ninput_items = len(input_items[0])\n\
       \n        for bins in input_items[0]:\n            p = np.around(bins).astype(int)\n\
       \            p = np.fft.fftshift(p)\n            for c in self.tb.connections.copy():\n\
       \                try:\n                    c.send(json.dumps({'s': p.tolist()},\
@@ -168,6 +167,23 @@ blocks:
     coordinate: [424, 12.0]
     rotation: 0
     state: true
+- name: gain
+  id: parameter
+  parameters:
+    alias: ''
+    comment: ''
+    hide: none
+    label: gain
+    short_id: g
+    type: eng_float
+    value: '40.0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [528, 12.0]
+    rotation: 0
+    state: disabled
 - name: import_0
   id: import
   parameters:
@@ -369,7 +385,7 @@ blocks:
     bw7: '0'
     bw8: '0'
     bw9: '0'
-    center_freq0: '0'
+    center_freq0: frequency
     center_freq1: '0'
     center_freq10: '0'
     center_freq11: '0'
@@ -477,7 +493,7 @@ blocks:
     dc_offs_enb9: default
     dev_addr: '""'
     dev_args: ''
-    gain0: '0'
+    gain0: '30.0'
     gain1: '0'
     gain10: '0'
     gain11: '0'
@@ -735,7 +751,7 @@ blocks:
     bus_structure: null
     coordinate: [200, 124.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: websocket
   id: snippet
   parameters:

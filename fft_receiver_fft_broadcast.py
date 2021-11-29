@@ -17,9 +17,8 @@ class fft_broadcast_sink(gr.sync_block):
                                in_sig=[(np.float32, fft_size)],
                                out_sig=[])
         self.tb=None
-    def set_tb(ext_tb):
-        self.tb=ext_tb        
-        print("****************TOP BLOCK *************",self.tb)
+    def set_tb(self,ext_tb):
+        self.tb=ext_tb
     def work(self, input_items, output_items):
         ninput_items = len(input_items[0])
 

@@ -13,8 +13,6 @@ from bottle import request, Bottle, abort, static_file
 from gevent.pywsgi import WSGIServer
 from geventwebsocket import WebSocketError
 from geventwebsocket.handler import WebSocketHandler
-from gnuradio import analog
-from gnuradio import blocks
 from gnuradio import gr
 from gnuradio.filter import firdes
 from gnuradio.fft import window
@@ -23,6 +21,8 @@ import signal
 from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
+from gnuradio import uhd
+import time
 from gnuradio.fft import logpwrfft
 import argparse
 import fft_receiver_fft_broadcast as fft_broadcast  # embedded python block
@@ -105,6 +105,20 @@ class fft_receiver(gr.top_block):
         ##################################################
         # Blocks
         ##################################################
+        self.usrp = uhd.usrp_source(
+            ",".join(("", '')),
+            uhd.stream_args(
+                cpu_format="fc32",
+                args='',
+                channels=list(range(0,1)),
+            ),
+        )
+        self.usrp.set_samp_rate(samp_rate)
+        self.usrp.set_time_unknown_pps(uhd.time_spec(0))
+
+        self.usrp.set_center_freq(frequency, 0)
+        self.usrp.set_antenna("RX2", 0)
+        self.usrp.set_gain(30.0, 0)
         self.logpwrfft_x_0 = logpwrfft.logpwrfft_c(
             sample_rate=samp_rate,
             fft_size=fft_size,
@@ -114,17 +128,14 @@ class fft_receiver(gr.top_block):
             average=False,
             shift=False)
         self.fft_broadcast = fft_broadcast.fft_broadcast_sink(fft_size=fft_size)
-        self.blocks_throttle_0 = blocks.throttle(gr.sizeof_gr_complex*1, samp_rate,True)
-        self.analog_fastnoise_source_x_0 = analog.fastnoise_source_c(analog.GR_GAUSSIAN, 1, 0, 8192)
 
 
 
         ##################################################
         # Connections
         ##################################################
-        self.connect((self.analog_fastnoise_source_x_0, 0), (self.blocks_throttle_0, 0))
-        self.connect((self.blocks_throttle_0, 0), (self.logpwrfft_x_0, 0))
         self.connect((self.logpwrfft_x_0, 0), (self.fft_broadcast, 0))
+        self.connect((self.usrp, 0), (self.logpwrfft_x_0, 0))
 
 
     def get_frequency(self):
@@ -132,14 +143,15 @@ class fft_receiver(gr.top_block):
 
     def set_frequency(self, frequency):
         self.frequency = frequency
+        self.usrp.set_center_freq(self.frequency, 0)
 
     def get_samp_rate(self):
         return self.samp_rate
 
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
-        self.blocks_throttle_0.set_sample_rate(self.samp_rate)
         self.logpwrfft_x_0.set_sample_rate(self.samp_rate)
+        self.usrp.set_samp_rate(self.samp_rate)
 
     def get_fft_size(self):
         return self.fft_size
